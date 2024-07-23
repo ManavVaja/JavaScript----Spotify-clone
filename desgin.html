@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Music Search and Play</title>
+</head>
+<body>
+    <input type="text" id="searchInput" placeholder="Search songs...">
+    <ul id="songList">
+        <li data-url="http://192.168.56.1:3000/music/Abhi Na Jao Chhod Kar.mp3">Song One</li>
+        <li data-url="http://192.168.56.1:3000/music/Gulabi Sadi Ani Lali.mp3">Song Two</li>
+        <li data-url="http://192.168.56.1:3000/music/Likhe Jo Khat Tujhe.mp3">Song Three</li>
+        <li data-url="song4.mp3">Song Four</li>
+        <li data-url="song5.mp3">Song Five</li>
+    </ul>
+    <audio id="audioPlayer" controls></audio>
+
+    <script>
+        const searchInput = document.getElementById('searchInput');
+        const songList = document.getElementById('songList');
+        const audioPlayer = document.getElementById('audioPlayer');
+
+        searchInput.addEventListener('input', function() {
+            const filter = searchInput.value.toLowerCase();
+            const songs = songList.getElementsByTagName('li');
+
+            for (let i = 0; i < songs.length; i++) {
+                const song = songs[i].textContent || songs[i].innerText;
+                if (song.toLowerCase().indexOf(filter) > -1) {
+                    songs[i].style.display = '';
+                } else {
+                    songs[i].style.display = 'none';
+                }
+            }
+        });
+
+        songList.addEventListener('click', function(event) {
+            const clickedItem = event.target;
+            if (clickedItem.tagName === 'LI') {
+                const songUrl = clickedItem.getAttribute('data-url');
+                audioPlayer.src = songUrl;
+                audioPlayer.play();
+            }
+        });
+    </script>
+</body>
+</html>

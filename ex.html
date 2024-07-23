@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link rel="stylesheet" href="utility.css" />
+    <style>
+      body {
+        background-color: #212121;
+      }
+      .container {
+        display: flex;
+        flex-direction: column;
+        width: 50vw;
+        height: 100vh;
+        border: 1px solid red;
+        justify-content: center;
+        align-items: center;
+      }
+      .results {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        justify-content: center;
+        align-items: center;
+        width: 30vw;
+        height: 80vh;
+        text-decoration: none;
+        border: 1px solid yellow;
+        overflow-y: scroll;
+      }
+      .search-container {
+        width: 300px;
+        height: 100px;
+      }
+      .search-input {
+        margin-top: 20px;
+        width: 200px;
+        height: 30px;
+      }
+      .music-box {
+        display: flex;
+        flex-direction: row;
+        border: 1px solid white;
+        border-radius: 5px;
+        height: 50px;
+        width: 350px;
+        margin-top: 12px;
+        gap: 5px;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .music-box:hover {
+        background-color: rgb(104, 220, 118);
+        border-radius: 10px;
+        border: 1px solid yellowgreen;
+        z-index: 0.5;
+      }
+
+      .music-img {
+        cursor: pointer;
+        padding-top: 5px;
+      }
+
+      .music-play {
+        cursor: pointer;
+        padding-right: 10px;
+      }
+      ul {
+        
+        text-decoration: none;
+      }
+      li {
+        list-style: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div id="search-container" class="search-container">
+        <input
+          type="text"
+          id="search-input"
+          class="search-input"
+          placeholder="Search..."
+        />
+      </div>
+      <div class="results" id="results">
+        <ul>
+          <!--Daynamic add songs based on serach input-->
+        </ul>
+      </div>
+    </div>
+
+    <script>
+      let currentSong = new Audio();
+      let currentMusic = new Audio();
+      let songs;
+      let searchsongs;
+      let searchfolder;
+      let searchIndex = 0;
+      let music;
+      let isSearchPlaying = false; // To track which type of music is playing
+
+      function updatePlayButton(index, isPlaying) {
+        // Update search results play buttons
+        let searchItems = document.querySelectorAll(".music-box");
+        searchItems.forEach((item, i) => {
+          let playButton = item.querySelector(".searchPlay");
+          if (i === index) {
+            playButton.src = isPlaying ? "svg/paused.svg" : "svg/play.svg";
+            item.classList.add("active-song");
+          } else {
+            playButton.src = "svg/play.svg";
+            item.classList.remove("active-song");
+          }
+        });
+      }
+
+      // For searched songs
+      const playSong = (index, paused = false) => {
+        if (!paused) {
+          currentSong.pause(); // Stop the currently playing song
+        }
+        searchIndex = index;
+        const track = searchsongs[index];
+        currentSong.src = `/${searchfolder}/` + track;
+        if (!paused) {
+          currentSong.play();
+          isSearchPlaying = true;
+          updatePlayButton(index, true)
+        }
+      };
+
+      async function getMusic(folder) {
+        searchfolder = folder;
+        let a = await fetch(`http://192.168.56.1:3000/${folder}/`);
+        let respons = await a.text();
+        let div = document.createElement("div");
+        div.innerHTML = respons;
+        let as = div.getElementsByTagName("a");
+        searchsongs = [];
+        for (let index = 0; index < as.length; index++) {
+          const element = as[index];
+          if (element.href.endsWith(".mp3")) {
+            searchsongs.push(
+              element.href.replaceAll("%20", " ").split("/music/")[1]
+            );
+          }
+        }
+
+        // Show the search results
+        // Function to handle search input and display results
+        async function handleSearchInput(event) {
+          const searchQuery = event.target.value.toLowerCase();
+          const resultsContainer = document
+            .getElementById("results")
+            .getElementsByTagName("ul")[0];
+                    
+    
+          // Clear previous search results
+          resultsContainer.innerHTML = "";
+
+          if (searchQuery === "") {
+            return;
+          }
+
+          // Fetch and filter songs based on search query
+          const searchResults = searchsongs.filter((searchsongs) =>
+            searchsongs.toLowerCase().includes(searchQuery)
+          );
+
+          console.log(searchResults);
+          
+
+          if (searchResults.length === 0) {
+            resultsContainer.innerHTML = "<li>No songs found</li>";
+          } else {
+            searchResults.forEach((music, index) => {
+              const listItem = document.createElement("li");
+              listItem.innerHTML = `
+                <li class="music-box">
+                    <div class="music-img">
+                        <img src="svg/tune.svg" alt="Music" class="invert" width="50px" height="30px">
+                    </div>
+                    <div class="music-name">
+                        <h5 class = "invert">${
+                          music.replace("/", "").split(".")[0]
+                        }</h5>
+                    </div>
+                    <div class="music-play">
+                        <img class="invert searchPlay" src="svg/play.svg" alt="">
+                    </div>
+                </li>`;
+              resultsContainer.appendChild(listItem);
+                console.log(index);
+                
+              listItem
+                .querySelector(".searchPlay")
+                .addEventListener("click", (event) => {
+                  event.stopPropagation();
+                  if (searchIndex === index) {
+                    if (currentSong.paused) {
+                      currentSong.play();
+                      updatePlayButton(index, true);
+                    } else {
+                      currentSong.pause();
+                      updatePlayButton(index, false);
+                    }
+                  } else {
+                    playSong(index);
+                  }
+                });
+            });
+          }
+        }
+        document
+          .getElementById("search-input")
+          .addEventListener("input", handleSearchInput);
+        console.log(searchsongs);
+
+        return searchsongs;
+      }
+
+      getMusic("music");
+    </script>
+  </body>
+</html>

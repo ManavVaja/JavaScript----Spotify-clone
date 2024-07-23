@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Spotify</title>
+        <link rel="stylesheet" href="style.css">
+        <link rel="stylesheet" href="utility.css">
+    </head>
+    <body>
+        <div class="container">
+            <div class="left-container">
+
+                <div id="search-container" class="search-container">
+                    <input type="text" id="search-input" class="search-input" placeholder="Search...">
+                </div>
+                <div class="search-field" id="search-field">
+                    <img class="beck invert" src="svg/close.svg" alt="close">
+                    <div class="results" id="results">
+                        <ul>
+                            <!-- Dynamic field for search results -->
+                        </ul>
+                            
+                    </div>
+                </div>
+
+                
+                <div class="title-bar bg-color rounded">
+                    <div class="logo invert">
+                        <img width="100px" src="svg/logo.svg" alt="Spotify">
+                        <img class="close" src="svg/close.svg" alt="close">
+                    </div>
+                    <div class="home invert">
+                        <ul>
+                            <li><a href="index.html"><img src="svg/home.svg" alt="Home">Home</a></li>
+                            <li><a href="#" id="search-icon"><img class="search" src="svg/search.svg" alt="search">Search</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="library bg-color rounded">
+                    <div class="lib-logo invert">
+                        <img width="40px" src="svg/library.svg" alt="library">
+                        <h3>Your Libraray</h3>
+                    </div>
+                    <div class="songList">
+                        <ul>
+
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="right-container bg-color rounded">
+                <div class="hader">
+                    <div class="navigation invert">
+                        <img class="hambaurg" src="svg/hamburger.svg"
+                            alt="hamburger">
+                        <img src="svg/left.svg" alt="left">
+                        <img src="svg/right.svg" alt="right">
+                    </div>
+                    <div class="login-btn">
+                        <button id="sign-up">Sign Up</button>
+                        <button id="login">Login</button>
+                    </div>
+                </div>
+                <div class="albums">
+                    <div class="album-hader">
+                        <h1>Spotify Playlist</h1>
+                    </div>
+
+                        <div class="cards-container"> 
+                            <!-- Cards are feching from Api-->
+                        </div>
+
+                        <div class="playbar rounded">
+                            <div class="music-info invert">
+                                <div class="songName">
+
+                                </div>
+                                <div class="music-btn">
+                                    <img width="33px" id="previous"
+                                        src="svg/previous.svg"
+                                        alt="previous song">
+                                    <img width="33px" id="play"
+                                        src="svg/play.svg" alt="paly">
+                                    <img width="33px" id="next"
+                                        src="svg/next.svg" alt="Next_song">
+                                </div>
+                                <div class="timevol">
+                
+                                    <div class="songTime"></div>
+
+                                    <div class="volume">
+                                        <img src="svg/volume.svg" alt="Volume" id="volume-icon">
+                                        <div class="range">
+                                            <input type="range" name="range" id="vol" class="volume-range">
+                                        </div>
+                                        <div class="value"><h5></h5></div>
+                                    </div>
+                                </div>
+                                </div>
+                                <div class="seekbar">
+                                <div class="circul"></div>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="sc.js"></script>
+    </body>
+</html>
