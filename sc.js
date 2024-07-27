@@ -7,7 +7,6 @@ let currentIndex = 0;
 let currentfolder;
 let searchfolder;
 let searchIndex = 0;
-let music;
 let isSearchPlaying = false; // To track which type of music is playing
 
 async function getSongs(folder) {
@@ -127,7 +126,7 @@ const playMusic = (index, paused = false) => {
   if (!paused) {
       currentSong.play();
       isSearchPlaying = false;
-      updatePlayButton(index, true, 'library');
+      updatePlayButton(index, true);
   }
   document.querySelector(".songName").innerHTML = decodeURI(track)
       .replaceAll("/", "")
@@ -177,99 +176,104 @@ async function dispalyAlbums() {
 
 // new feheras 
 
-async function getMusic(folder) {
-  searchfolder = folder;
-  let a = await fetch(`http://192.168.56.1:3000/${folder}/`);
-  let respons = await a.text();
-  let div = document.createElement("div");
-  div.innerHTML = respons;
-  let as = div.getElementsByTagName("a");
-  searchsongs = [];
-  for (let index = 0; index < as.length; index++) {
-      const element = as[index];
-      if (element.href.endsWith(".mp3")) {
-          searchsongs.push(element.href.replaceAll("%20", " ").split('/music/')[1]);
+const music = [
+  { title: "Abhi na jao chod kar", url: "http://192.168.56.1:3000/music/Abhi%20Na%20Jao%20Chhod%20Kar.mp3" },
+  { title: "Barso Re", url: "http://192.168.56.1:3000/music/Barso%20Re.mp3" },
+  { title: "Gulabi sadi", url: "http://192.168.56.1:3000/music/Gulabi%20Sadi%20Ani%20Lali.mp3" },
+  { title: "Dekha tenu pahli pehli bar", url: "http://192.168.56.1:3000/music/Dekha%20Tenu%20Pehli%20Pehli%20Baar%20Ve.mp3" },
+  { title: "Humnava mare", url: "http://192.168.56.1:3000/music/Humnava%20Mere.mp3" },
+  { title: "Kya hua Tera vada", url: "http://192.168.56.1:3000/music/Kya%20Hua%20Tera%20Vada.mp3" },
+  { title: "Likhe jo khat tujhe", url: "http://192.168.56.1:3000/music/Likhe%20Jo%20Khat%20Tujhe.mp3" },
+  { title: "O Mahi O Mahi", url: "http://192.168.56.1:3000/music/O%20Mahi%20O%20Mahi.mp3" },
+  { title: "O Sathi", url: "http://192.168.56.1:3000/music/O%20Saathi.mp3" },
+  { title: "Pehli Dafa", url: "http://192.168.56.1:3000/music/Pehli%20Dafa.mp3" },
+  { title: "Radha Kase na Jale", url: "http://192.168.56.1:3000/music/Radha%20Kaise%20Na%20Jale.mp3" },
+  // Add more songs here
+];
+
+const searchInput = document.getElementById("search-input");
+const resultsList = document.getElementById("results");
+let currentPlaying = null;
+
+searchInput.addEventListener("input", () => {
+  const query = searchInput.value.toLowerCase();
+  resultsList.innerHTML = "";
+
+  const filteredSongs = music.filter((song) =>
+    song.title.toLowerCase().includes(query)
+  );
+
+  filteredSongs.forEach((song) => {
+    const listItem = document.createElement("li");
+    listItem.innerHTML = `
+      <li class="music-box">
+          <div class="music-img">
+              <img src="svg/tune.svg" alt="Music" class="invert" width="50px" height="30px">
+          </div>
+          <div class="music-name">
+              <h5>${song.title}</h5>
+          </div>
+          <div class="music-play">
+              <img class="invert searchPlay" src="svg/play.svg" alt="">
+          </div>
+      </li>`;
+
+    const playButton = listItem.querySelector('.searchPlay');
+    let play = document.getElementById("play");
+    playButton.addEventListener('click', (element) => {
+      element.stopPropagation();
+      
+      if (currentPlaying && currentPlaying !== song.url) {
+        // If there's another song playing, pause it and reset its icon
+        currentMusic.pause();
+        const previousPlayButton = document.querySelector('.searchPlay[src="svg/paused.svg"]');
+        if (previousPlayButton) {
+          previousPlayButton.src = 'svg/play.svg';
+        }
       }
-  }
 
-  // Show the search results
-  // Function to handle search input and display results
-  async function handleSearchInput(event) {
-    const searchQuery = event.target.value.toLowerCase();
-    const resultsContainer = document.getElementById('results').getElementsByTagName('ul')[0];
+      if (currentMusic.src !== song.url) {
+        currentMusic.src = song.url;
+        currentSong.src = currentMusic;
+      }
 
-    // Clear previous search results
-    resultsContainer.innerHTML = '';
-
-    if (searchQuery === '') {
-        return;
-    }
-
-    // Fetch and filter songs based on search query
-    const searchResults = searchsongs.filter(searchsongs => searchsongs.toLowerCase().includes(searchQuery));
-
-    if (searchResults.length === 0) {
-        resultsContainer.innerHTML = '<li>No songs found</li>';
-    } else {
-        searchResults.forEach((music, index) => {
-            const listItem = document.createElement('li');
-            listItem.innerHTML = `
-                <li class="music-box">
-                    <div class="music-img">
-                        <img src="svg/tune.svg" alt="Music" class="invert" width="50px" height="30px">
-                    </div>
-                    <div class="music-name">
-                        <h5>${music.replace("/", "").split(".")[0]}</h5>
-                    </div>
-                    <div class="music-play">
-                        <img class="invert searchPlay" src="svg/play.svg" alt="">
-                    </div>
-                </li>`;
-            resultsContainer.appendChild(listItem);
-
-            listItem.querySelector(".searchPlay").addEventListener("click", (event) => {
-                event.stopPropagation();
-                if (searchIndex === index) {
-                    if (currentSong.paused) {
-                        currentSong.play();
-                        updatePlayButton(index, true, 'search');
-                    } else {
-                        currentSong.pause();
-                        updatePlayButton(index, false, 'search');
-                    }
-                } else {
-                    playSong(index);
-                }
-            });
-
-           
+      if (currentMusic.paused) {
+        currentMusic.play();
+        play.addEventListener('click', (e)=> {
+          e.stopPropagation();
+          currentMusic.play();
+          playButton.src = 'svg/paused.svg';
         });
-    }
-}  
-  document.getElementById('search-input').addEventListener('input', handleSearchInput);
+        currentSong.play();
+        play.src = 'svg/paused.svg';
+        playButton.src = 'svg/paused.svg';
+       
+      } else {
+        currentMusic.pause();
+        play.addEventListener('click', (e)=> {
+          e.stopPropagation();
+          playButton.src = 'svg/play.svg';
+          currentMusic.pause();
+        });
+        currentSong.pause();
+        play.src = 'svg/play.svg';
+        playButton.src = 'svg/play.svg';
+        
+      }
 
-  return searchsongs;
-}
+      currentPlaying = song.url;
+
+      document.querySelector(".songName").innerHTML = song.title;
+      document.querySelector(".songTime").innerHTML = "00:00/00:00";
+    });
+    
+    resultsList.appendChild(listItem);
+  });
+});
 
 
 // For searched songs
-const playSong = (index, paused = false) => {
-  if (!paused) {
-      currentSong.pause(); // Stop the currently playing song
-  }
-  searchIndex = index;
-  const track = searchsongs[index];
-  currentSong.src = `/${searchfolder}/` + track;
-  if (!paused) {
-      currentSong.play();
-      isSearchPlaying = true;
-      updatePlayButton(index, true, 'search');
-  }
-  document.querySelector(".songName").innerHTML = decodeURI(track)
-      .replaceAll("/", "")
-      .split(".")[0];
-  document.querySelector(".songTime").innerHTML = "00:00/00:00";
-};
+
 
 
 
@@ -284,7 +288,6 @@ const playSong = (index, paused = false) => {
 // To fulfill the promises we define the main function which is also an async function and call the getSongs() function into the main function and await the getSongs() function to wait until the promise is fulfilled.
 
 async function main() {
-  searchsongs = await getMusic("music")
   songs = await getSongs("songs/AtifiAslam");
   playMusic(0, true);
 
@@ -512,8 +515,6 @@ document.querySelector(".beck").addEventListener("click", () => {
   titlebar.style.display = "flex"
   librarycont.style.display = "block";
 });
-
-  getMusic("music/");
 
 }
 

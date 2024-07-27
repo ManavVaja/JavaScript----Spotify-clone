@@ -69,7 +69,6 @@
         padding-right: 10px;
       }
       ul {
-        
         text-decoration: none;
       }
       li {
@@ -87,144 +86,65 @@
           placeholder="Search..."
         />
       </div>
-      <div class="results" id="results">
-        <ul>
+      <div class="results">
+        <ul id="results">
           <!--Daynamic add songs based on serach input-->
         </ul>
+        <audio id="audioPlayer" controls></audio>
       </div>
     </div>
 
     <script>
-      let currentSong = new Audio();
-      let currentMusic = new Audio();
-      let songs;
-      let searchsongs;
-      let searchfolder;
-      let searchIndex = 0;
-      let music;
-      let isSearchPlaying = false; // To track which type of music is playing
+      const songs = [
+        { title: "Abhi na jao chod kar", url: "http://192.168.56.1:3000/music/Abhi%20Na%20Jao%20Chhod%20Kar.mp3" },
+        { title: "Barso Re", url: "http://192.168.56.1:3000/music/Barso%20Re.mp3" },
+        { title: "Gulabi sadi", url: "http://192.168.56.1:3000/music/Gulabi%20Sadi%20Ani%20Lali.mp3" },
+        { title: "Dekha tenu pahli pehli bar", url: "http://192.168.56.1:3000/music/Dekha%20Tenu%20Pehli%20Pehli%20Baar%20Ve.mp3" },
+        { title: "Humnava mare", url: "http://192.168.56.1:3000/music/Humnava%20Mere.mp3" },
+        { title: "Kya hua Tera vada", url: "http://192.168.56.1:3000/music/Kya%20Hua%20Tera%20Vada.mp3" },
+        { title: "Likhe jo khat tujhe", url: "http://192.168.56.1:3000/music/Likhe%20Jo%20Khat%20Tujhe.mp3" },
+        { title: "O Mahi O Mahi", url: "http://192.168.56.1:3000/music/O%20Mahi%20O%20Mahi.mp3" },
+        { title: "O Sathi", url: "http://192.168.56.1:3000/music/O%20Saathi.mp3" },
+        { title: "Pehli Dafa", url: "http://192.168.56.1:3000/music/Pehli%20Dafa.mp3" },
+        { title: "Radha Kase na Jale", url: "http://192.168.56.1:3000/music/Radha%20Kaise%20Na%20Jale.mp3" },
+        // Add more songs here
+      ];
 
-      function updatePlayButton(index, isPlaying) {
-        // Update search results play buttons
-        let searchItems = document.querySelectorAll(".music-box");
-        searchItems.forEach((item, i) => {
-          let playButton = item.querySelector(".searchPlay");
-          if (i === index) {
-            playButton.src = isPlaying ? "svg/paused.svg" : "svg/play.svg";
-            item.classList.add("active-song");
-          } else {
-            playButton.src = "svg/play.svg";
-            item.classList.remove("active-song");
-          }
-        });
-      }
+      const searchInput = document.getElementById("search-input");
+      const resultsList = document.getElementById("results");
+      const audioPlayer = document.getElementById('audioPlayer');
 
-      // For searched songs
-      const playSong = (index, paused = false) => {
-        if (!paused) {
-          currentSong.pause(); // Stop the currently playing song
-        }
-        searchIndex = index;
-        const track = searchsongs[index];
-        currentSong.src = `/${searchfolder}/` + track;
-        if (!paused) {
-          currentSong.play();
-          isSearchPlaying = true;
-          updatePlayButton(index, true)
-        }
-      };
-
-      async function getMusic(folder) {
-        searchfolder = folder;
-        let a = await fetch(`http://192.168.56.1:3000/${folder}/`);
-        let respons = await a.text();
-        let div = document.createElement("div");
-        div.innerHTML = respons;
-        let as = div.getElementsByTagName("a");
-        searchsongs = [];
-        for (let index = 0; index < as.length; index++) {
-          const element = as[index];
-          if (element.href.endsWith(".mp3")) {
-            searchsongs.push(
-              element.href.replaceAll("%20", " ").split("/music/")[1]
-            );
-          }
-        }
-
-        // Show the search results
-        // Function to handle search input and display results
-        async function handleSearchInput(event) {
-          const searchQuery = event.target.value.toLowerCase();
-          const resultsContainer = document
-            .getElementById("results")
-            .getElementsByTagName("ul")[0];
-                    
-    
-          // Clear previous search results
-          resultsContainer.innerHTML = "";
-
-          if (searchQuery === "") {
-            return;
-          }
-
-          // Fetch and filter songs based on search query
-          const searchResults = searchsongs.filter((searchsongs) =>
-            searchsongs.toLowerCase().includes(searchQuery)
-          );
-
-          console.log(searchResults);
-          
-
-          if (searchResults.length === 0) {
-            resultsContainer.innerHTML = "<li>No songs found</li>";
-          } else {
-            searchResults.forEach((music, index) => {
-              const listItem = document.createElement("li");
-              listItem.innerHTML = `
+      searchInput.addEventListener("input", () => {
+        const query = searchInput.value.toLowerCase();
+        resultsList.innerHTML = "";
+  
+        const filteredSongs = songs.filter((song) =>
+          song.title.toLowerCase().includes(query)
+        );
+        filteredSongs.forEach((song) => {
+          const listItem = document.createElement("li");
+          listItem.innerHTML = `
                 <li class="music-box">
                     <div class="music-img">
                         <img src="svg/tune.svg" alt="Music" class="invert" width="50px" height="30px">
                     </div>
-                    <div class="music-name">
-                        <h5 class = "invert">${
-                          music.replace("/", "").split(".")[0]
-                        }</h5>
+                    <div class="music-name invert">
+                        <h5>${song.title}</h5>
                     </div>
                     <div class="music-play">
                         <img class="invert searchPlay" src="svg/play.svg" alt="">
                     </div>
                 </li>`;
-              resultsContainer.appendChild(listItem);
-                console.log(index);
-                
-              listItem
-                .querySelector(".searchPlay")
-                .addEventListener("click", (event) => {
-                  event.stopPropagation();
-                  if (searchIndex === index) {
-                    if (currentSong.paused) {
-                      currentSong.play();
-                      updatePlayButton(index, true);
-                    } else {
-                      currentSong.pause();
-                      updatePlayButton(index, false);
-                    }
-                  } else {
-                    playSong(index);
-                  }
-                });
-            });
-          }
-        }
-        document
-          .getElementById("search-input")
-          .addEventListener("input", handleSearchInput);
-        console.log(searchsongs);
-
-        return searchsongs;
-      }
-
-      getMusic("music");
+          listItem.addEventListener("click", (e) => {
+            e.stopPropagation();
+            audioPlayer.src = song.url;
+            audioPlayer.play();
+            console.log(song.url);
+            
+          });
+          resultsList.appendChild(listItem);
+        });
+      });
     </script>
   </body>
 </html>
