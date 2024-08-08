@@ -225,7 +225,6 @@ body {
     color: white;
     font-size: 16px;
     padding: 5px 5px;
-    background-color: #232121;
     border-radius: 8px;
 }
 
@@ -240,7 +239,7 @@ body {
 }
 
 .cards:hover{
-    background-color: #4ab453e6;;
+    background-color: #383636bd;
 }
 
 .playbar {
