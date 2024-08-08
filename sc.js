@@ -8,6 +8,7 @@ let currentfolder;
 let searchfolder;
 let searchIndex = 0;
 let isSearchPlaying = false; // To track which type of music is playing
+let searchResults = []; // To store the filtered search results
 
 async function getSongs(folder) {
   currentfolder = folder;
@@ -50,6 +51,7 @@ async function getSongs(folder) {
     // Update the play button in li tag
     e.querySelector(".liPlay").addEventListener("click", (event) => {
       event.stopPropagation();
+      currentMusic.pause()
       if (currentIndex === index) {
         if (currentSong.paused) {
           currentSong.play();
@@ -91,24 +93,37 @@ function formatSecondsToMinutes(seconds) {
   return `${paddedMinutes}:${paddedSeconds}`;
 }
 
-// Update the play/pause button for the current song
 
+// Update the play/pause button for the current song
 function updatePlayButton(index, isPlaying, context) {
-  const contextClass = context === 'search' ? 'searchPlay' : 'liPlay';
-  const songItems = context === 'search' ? document.querySelectorAll(".results li") : document.querySelectorAll(".songList li");
-  songItems.forEach((li, i) => {
-      let playButton = li.querySelector(`.${contextClass}`);
+  let playButton;
+  if (context === 'search') {
+    let searchItems = document.querySelectorAll(".results li");
+    searchItems.forEach((li, i) => {
+      playButton = li.querySelector(".searchPlay");
       if (i === index) {
-          playButton.src = isPlaying ? "svg/paused.svg" : "svg/play.svg";
-          li.classList.add("active-song");
+        playButton.src = isPlaying ? "svg/paused.svg" : "svg/play.svg";
+        li.classList.add("active-song");
       } else {
-          playButton.src = "svg/play.svg";
-          li.classList.remove("active-song");
+        playButton.src = "svg/play.svg";
+        li.classList.remove("active-song");
       }
-  });
+    });
+  } else {
+    let libraryItems = document.querySelectorAll(".songList li");
+    libraryItems.forEach((li, i) => {
+      playButton = li.querySelector(".liPlay");
+      if (i === index) {
+        playButton.src = isPlaying ? "svg/paused.svg" : "svg/play.svg";
+        li.classList.add("active-song");
+      } else {
+        playButton.src = "svg/play.svg";
+        li.classList.remove("active-song");
+      }
+    });
+  }
   document.getElementById("play").src = isPlaying ? "svg/paused.svg" : "svg/play.svg";
 }
-
 
 
 
@@ -125,8 +140,9 @@ const playMusic = (index, paused = false) => {
   currentSong.src = `/${currentfolder}/` + track;
   if (!paused) {
       currentSong.play();
+      currentMusic.pause();
       isSearchPlaying = false;
-      updatePlayButton(index, true);
+      updatePlayButton(index, true, context = 'liPlay');
   }
   document.querySelector(".songName").innerHTML = decodeURI(track)
       .replaceAll("/", "")
@@ -191,21 +207,36 @@ const music = [
   // Add more songs here
 ];
 
-const searchInput = document.getElementById("search-input");
-const resultsList = document.getElementById("results");
-let currentPlaying = null;
+const playSearchedSong = (index, paused = false) => {
+  if (!paused) {
+    currentMusic.pause(); // Stop the currently playing song
+  }
+  searchIndex = index;
+  const track = searchResults[index];
+  currentMusic.src = track.url;
+  if (!paused) {
+    currentMusic.play();
+    currentSong.pause();
+    isSearchPlaying = true;
+    updatePlayButton(index, true, 'search');
+  }
+  document.querySelector(".songName").innerHTML = decodeURI(track.title).replaceAll("/", "").split(".")[0];
+  document.querySelector(".songTime").innerHTML = "00:00/00:00";
+};
 
-searchInput.addEventListener("input", () => {
-  const query = searchInput.value.toLowerCase();
-  resultsList.innerHTML = "";
+// Adds the event listener to the search input field
+const search = document.getElementById("search-input");
+search.addEventListener("input", (e) => {
+  const value = e.target.value.toLowerCase();
+  searchResults = music
+    .map((song, originalIndex) => ({ ...song, originalIndex }))
+    .filter((song) => song.title.toLowerCase().includes(value));
+  
+  const resultsContainer = document.querySelector(".results ul");
+  resultsContainer.innerHTML = " ";
 
-  const filteredSongs = music.filter((song) =>
-    song.title.toLowerCase().includes(query)
-  );
-
-  filteredSongs.forEach((song) => {
-    const listItem = document.createElement("li");
-    listItem.innerHTML = `
+  searchResults.forEach((song, index) => {
+    resultsContainer.innerHTML += `
       <li class="music-box">
           <div class="music-img">
               <img src="svg/tune.svg" alt="Music" class="invert" width="50px" height="30px">
@@ -214,60 +245,35 @@ searchInput.addEventListener("input", () => {
               <h5>${song.title}</h5>
           </div>
           <div class="music-play">
-              <img class="invert searchPlay" src="svg/play.svg" alt="">
+              <img class="invert searchPlay" id = "searchPlay" src="svg/play.svg" alt="">
           </div>
       </li>`;
+  });
 
-    const playButton = listItem.querySelector('.searchPlay');
-    let play = document.getElementById("play");
-    playButton.addEventListener('click', (element) => {
-      element.stopPropagation();
-      
-      if (currentPlaying && currentPlaying !== song.url) {
-        // If there's another song playing, pause it and reset its icon
-        currentMusic.pause();
-        const previousPlayButton = document.querySelector('.searchPlay[src="svg/paused.svg"]');
-        if (previousPlayButton) {
-          previousPlayButton.src = 'svg/play.svg';
-        }
-      }
-
-      if (currentMusic.src !== song.url) {
-        currentMusic.src = song.url;
-        currentSong.src = currentMusic;
-      }
-
-      if (currentMusic.paused) {
-        currentMusic.play();
-        play.addEventListener('click', (e)=> {
-          e.stopPropagation();
+  let searchPlayButtons = document.querySelectorAll(".searchPlay");
+  searchPlayButtons.forEach((btn, index) => {
+    btn.addEventListener("click", (event) => {
+      event.stopPropagation();
+      currentSong.pause();
+      if (searchIndex === index) {
+        if (currentMusic.paused) {
           currentMusic.play();
-          playButton.src = 'svg/paused.svg';
-        });
-        currentSong.play();
-        play.src = 'svg/paused.svg';
-        playButton.src = 'svg/paused.svg';
-       
-      } else {
-        currentMusic.pause();
-        play.addEventListener('click', (e)=> {
-          e.stopPropagation();
-          playButton.src = 'svg/play.svg';
+          updatePlayButton(index, true, 'search');
+        } else {
           currentMusic.pause();
-        });
-        currentSong.pause();
-        play.src = 'svg/play.svg';
-        playButton.src = 'svg/play.svg';
-        
+          updatePlayButton(index, false, 'search');
+        }
+      } else {
+        playSearchedSong(index);
       }
-
-      currentPlaying = song.url;
-
-      document.querySelector(".songName").innerHTML = song.title;
-      document.querySelector(".songTime").innerHTML = "00:00/00:00";
     });
-    
-    resultsList.appendChild(listItem);
+  });
+
+  let searchItems = document.querySelectorAll(".results li");
+  searchItems.forEach((item, index) => {
+    item.addEventListener("click", () => {
+      playSearchedSong(index);
+    });
   });
 });
 
@@ -297,26 +303,26 @@ async function main() {
   let previous = document.getElementById("previous");
   let next = document.getElementById("next");
   let volume = document.getElementById("vol");
-
+  // let searchplaybtn = document.getElementById('searchPlay');
   let play = document.getElementById("play");
   play.addEventListener("click", () => {
-      if (isSearchPlaying) {
-          if (currentSong.paused) {
-              currentSong.play();
-              updatePlayButton(searchIndex, true, 'search');
-          } else {
-              currentSong.pause();
-              updatePlayButton(searchIndex, false, 'search');
-          }
-      } else {
-          if (currentSong.paused) {
-              currentSong.play();
-              updatePlayButton(currentIndex, true, 'library');
-          } else {
-              currentSong.pause();
-              updatePlayButton(currentIndex, false, 'library');
-          }
-      }
+   if (isSearchPlaying) {
+    if (currentMusic.paused) {
+      currentMusic.play();
+      updatePlayButton(searchIndex, true, 'search');
+    } else {
+      currentMusic.pause();
+      updatePlayButton(searchIndex, false, 'search');
+    }
+  } else {
+    if (currentSong.paused) {
+      currentSong.play();
+      updatePlayButton(currentIndex, true, 'library');
+    } else {
+      currentSong.pause();
+      updatePlayButton(currentIndex, false, 'library');
+    }
+  }
       value.innerHTML = " "
       value.innerHTML = value.innerHTML + `<h5>50%</h5>`;
   });

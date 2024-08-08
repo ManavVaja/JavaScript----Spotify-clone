@@ -2,11 +2,12 @@ console.log("Write some javaScript!");
 let currentSong = new Audio();
 let currentMusic = new Audio();
 let songs;
+let searchsongs;
 let currentIndex = 0;
 let currentfolder;
 let searchfolder;
 let searchIndex = 0;
-let music;
+let isSearchPlaying = false; // To track which type of music is playing
 
 async function getSongs(folder) {
   currentfolder = folder;
@@ -49,6 +50,7 @@ async function getSongs(folder) {
     // Update the play button in li tag
     e.querySelector(".liPlay").addEventListener("click", (event) => {
       event.stopPropagation();
+      currentMusic.pause()
       if (currentIndex === index) {
         if (currentSong.paused) {
           currentSong.play();
@@ -91,51 +93,50 @@ function formatSecondsToMinutes(seconds) {
 }
 
 // Update the play/pause button for the current song
-function updatePlayButton(index, isPlaying) {
-  let songItems = document.querySelectorAll(".songList li");
+
+function updatePlayButton(index, isPlaying, context) {
+  const contextClass = context === 'search' ? 'searchPlay' : 'liPlay';
+  const songItems = context === 'search' ? document.querySelectorAll(".results li") : document.querySelectorAll(".songList li");
   songItems.forEach((li, i) => {
-    let playButton = li.querySelector(".liPlay");
-    if (i === index) {
-      playButton.src = isPlaying ? "svg/paused.svg" : "svg/play.svg";
-      li.classList.add("active-song");
-    } else {
-      playButton.src = "svg/play.svg";
-      li.classList.remove("active-song");
-    }
+      let playButton = li.querySelector(`.${contextClass}`);
+      if (i === index) {
+          playButton.src = isPlaying ? "svg/paused.svg" : "svg/play.svg";
+          li.classList.add("active-song");
+      } else {
+          playButton.src = "svg/play.svg";
+          li.classList.remove("active-song");
+      }
   });
-
-  // Update the playbar play/pause button
   document.getElementById("play").src = isPlaying ? "svg/paused.svg" : "svg/play.svg";
-
-   // Update search results play buttons
-   let searchItems = document.querySelectorAll(".music-box");
-   searchItems.forEach((item, i) => {
-       let playButton = item.querySelector(".searchPlay");
-       if (i === index) {
-           playButton.src = isPlaying ? "svg/paused.svg" : "svg/play.svg";
-           item.classList.add("active-song");
-       } else {
-           playButton.src = "svg/play.svg";
-           item.classList.remove("active-song");
-       }
-   });
 }
+
+
+
+
 
 // We create the function which plays the songs
 // This function accepts the argument as the track of the song and fetches that song from the (folder) /songs/ then append the track of the song to play the current music.
+// For album songs
 const playMusic = (index, paused = false) => {
+  if (!paused) {
+      currentSong.pause(); // Stop the currently playing song
+  }
   currentIndex = index;
   const track = songs[index];
   currentSong.src = `/${currentfolder}/` + track;
   if (!paused) {
-    currentSong.play();
-    updatePlayButton(index, true);
+      currentSong.play();
+      currentMusic.pause();
+      isSearchPlaying = false;
+      updatePlayButton(index, true, context = 'liPlay');
   }
   document.querySelector(".songName").innerHTML = decodeURI(track)
-    .replaceAll("/", "")
-    .split(".")[0];
+      .replaceAll("/", "")
+      .split(".")[0];
   document.querySelector(".songTime").innerHTML = "00:00/00:00";
 };
+
+
 
 
 
@@ -177,38 +178,117 @@ async function dispalyAlbums() {
 
 // new feheras 
 
-async function getMusic(folder) {
-  searchfolder = folder
-  let a = await fetch(`http://192.168.56.1:3000/${folder}/`);
-  let respons = await a.text();
-  let div = document.createElement("div");
-  div.innerHTML = respons;
-  let as = div.getElementsByTagName("a");
-  let searchsongs = [];
-  for (let index = 0; index < as.length; index++) {
-      const element = as[index];
-      if (element.href.endsWith(".mp3")) {
-          searchsongs.push(element.href.replaceAll("%20", " ").split('/music/')[1]);
-      }
-  }
-  return searchsongs;
-}
+const music = [
+  { title: "Abhi na jao chod kar", url: "http://192.168.56.1:3000/music/Abhi%20Na%20Jao%20Chhod%20Kar.mp3" },
+  { title: "Barso Re", url: "http://192.168.56.1:3000/music/Barso%20Re.mp3" },
+  { title: "Gulabi sadi", url: "http://192.168.56.1:3000/music/Gulabi%20Sadi%20Ani%20Lali.mp3" },
+  { title: "Dekha tenu pahli pehli bar", url: "http://192.168.56.1:3000/music/Dekha%20Tenu%20Pehli%20Pehli%20Baar%20Ve.mp3" },
+  { title: "Humnava mare", url: "http://192.168.56.1:3000/music/Humnava%20Mere.mp3" },
+  { title: "Kya hua Tera vada", url: "http://192.168.56.1:3000/music/Kya%20Hua%20Tera%20Vada.mp3" },
+  { title: "Likhe jo khat tujhe", url: "http://192.168.56.1:3000/music/Likhe%20Jo%20Khat%20Tujhe.mp3" },
+  { title: "O Mahi O Mahi", url: "http://192.168.56.1:3000/music/O%20Mahi%20O%20Mahi.mp3" },
+  { title: "O Sathi", url: "http://192.168.56.1:3000/music/O%20Saathi.mp3" },
+  { title: "Pehli Dafa", url: "http://192.168.56.1:3000/music/Pehli%20Dafa.mp3" },
+  { title: "Radha Kase na Jale", url: "http://192.168.56.1:3000/music/Radha%20Kaise%20Na%20Jale.mp3" },
+  // Add more songs here
+];
 
- // for search field songs 
-const playSong = (index, paused = false) => {
-  searchIndex = index;
-  const tracks = searchsongs[index];
-  currentSong.src = `/${searchfolder}/` + tracks;
-  currentMusic.play()
-  if (!paused) {
-    currentMusic.play();
-    updatePlayButton(index, true);
-  }
-  document.querySelector(".songName").innerHTML = decodeURI(tracks)
-    .replaceAll("/", "")
-    .split(".")[0];
-  document.querySelector(".songTime").innerHTML = "00:00/00:00";
-};
+const searchInput = document.getElementById("search-input");
+const resultsList = document.getElementById("results");
+let currentPlaying = null;
+
+searchInput.addEventListener("input", () => {
+  const query = searchInput.value.toLowerCase();
+  resultsList.innerHTML = "";
+
+  const filteredSongs = music.filter((song) =>
+    song.title.toLowerCase().includes(query)
+  );
+
+  filteredSongs.forEach((song) => {
+    const listItem = document.createElement("li");
+    listItem.innerHTML = `
+      <li class="music-box">
+          <div class="music-img">
+              <img src="svg/tune.svg" alt="Music" class="invert" width="50px" height="30px">
+          </div>
+          <div class="music-name">
+              <h5>${song.title}</h5>
+          </div>
+          <div class="music-play">
+              <img class="invert searchPlay" id = "searchPlay" src="svg/play.svg" alt="">
+          </div>
+      </li>`;
+
+    const playButton = listItem.querySelector('.searchPlay');
+    let play = document.getElementById("play");
+    playButton.addEventListener('click', (element) => {
+      element.stopPropagation();
+      
+      if (currentPlaying && currentPlaying !== song.url) {
+        // If there's another song playing, pause it and reset its icon
+        currentMusic.pause();
+        currentSong.pause();
+        const previousPlayButton = document.querySelector('.searchPlay[src="svg/paused.svg"]');
+        if (previousPlayButton) {
+          previousPlayButton.src = 'svg/play.svg';
+        }
+      }
+
+      if (currentMusic.src !== song.url) {
+        currentMusic.src = song.url;
+        currentSong.src = currentMusic;
+      }
+
+      if (currentMusic.paused) {
+        currentMusic.play();
+        currentSong.play();
+        play.src = 'svg/paused.svg';
+        playButton.src = 'svg/paused.svg';
+       
+      } else {
+        // currentSong.paused();
+        currentMusic.pause();
+        play.src = 'svg/play.svg';
+        playButton.src = 'svg/play.svg';
+        
+      }
+
+      currentPlaying = song.url;
+
+      document.querySelector(".songName").innerHTML = song.title;
+      document.querySelector(".songTime").innerHTML = "00:00/00:00";
+    });
+    
+    // play.addEventListener('click', (e)=> {
+    //   e.stopPropagation();
+    //   if (currentSong === currentMusic) {
+    //     if (currentMusic.paused) {
+    //       currentMusic.play();
+    //       currentSong.play();
+    //       playButton.src = 'svg/paused.svg';
+    //       play.src = 'svg/paused.svg';
+    //     }
+    //     else{
+    //       playButton.src = 'svg/play.svg';
+    //       play.src = 'svg/play.svg';
+    //       currentMusic.pause();
+    //     }
+    //   }
+    // });
+
+    resultsList.appendChild(listItem);
+  });
+});
+
+
+// For searched songs
+
+
+
+
+
+
 
 // new fechers section end's
 
@@ -218,29 +298,46 @@ const playSong = (index, paused = false) => {
 // To fulfill the promises we define the main function which is also an async function and call the getSongs() function into the main function and await the getSongs() function to wait until the promise is fulfilled.
 
 async function main() {
-  searchsongs = await getMusic("music")
   songs = await getSongs("songs/AtifiAslam");
   playMusic(0, true);
 
   // Display the albums
   await dispalyAlbums();
 
-  let play = document.getElementById("play");
   let previous = document.getElementById("previous");
   let next = document.getElementById("next");
   let volume = document.getElementById("vol");
-
+  let searchplaybtn = document.getElementById('searchPlay');
+  let play = document.getElementById("play");
   play.addEventListener("click", () => {
-    if (currentSong.paused) {
-      currentSong.play();
-      updatePlayButton(currentIndex, true);
-    } else {
-      currentSong.pause();
-      updatePlayButton(currentIndex, false);
-    }
-    value.innerHTML = " "
-    value.innerHTML = value.innerHTML + `<h5>50%</h5>`;
+      if (currentSong === currentMusic) {
+          if (currentSong.paused || currentMusic.paused) {
+              currentSong.play();
+              currentMusic.play();
+              play.src = 'svg/paused.svg';
+              searchplaybtn.src = 'svg/paused.svg';
+          } else {
+              currentSong.pause();
+              currentMusic.pause();
+              play.src = 'svg/play.svg';
+              searchplaybtn.src = 'svg/play.svg';
+              
+          }
+      } else {
+          if (currentSong.paused) {
+              currentSong.play();
+              currentMusic.pause();
+              updatePlayButton(currentIndex, true, 'liPlay');
+          } else {
+              currentSong.pause();
+              currentMusic.pause()
+              updatePlayButton(currentIndex, false, 'liPlay');
+          }
+      }
+      value.innerHTML = " "
+      value.innerHTML = value.innerHTML + `<h5>50%</h5>`;
   });
+  
 
   // Add an eventListener to the previous button
   next.addEventListener("click", () => {
@@ -309,6 +406,21 @@ async function main() {
     }
   });
 
+    // Calculate the currentTime, offsetX (the offsetX will give the horizontal x value when the circle moves)
+    currentMusic.addEventListener("timeupdate", () => {
+      // we use the formatSecondsToMinutes() function to display the second into the minutes
+      document.querySelector(".songTime").innerHTML = `${formatSecondsToMinutes(
+        currentMusic.currentTime)} : ${formatSecondsToMinutes(currentMusic.duration)}`;
+      // To seek the circle into the seekbar we write this formula
+      // We assign dynamic value to the left position of the circle, That formula is dividing the currentTime / duration then multiply with 100 and return that value in % format.
+      document.querySelector(".circul").style.left =
+        (currentMusic.currentTime / currentMusic.duration) * 100 + "%";
+      if (currentMusic.duration == currentMusic.currentTime) {
+        currentMusic.pause();
+        updatePlayButton(searchIndex, false);
+      }
+    });
+
   // We add the eventListener on seekbar to Whenever user clicks on seekbar they drag the circle on the seekbar and dynamically change the music time
   document.querySelector(".seekbar").addEventListener("click", (e) => {
     // This console logs the offsetX value, Total width of the seekbar and total duration of the song
@@ -331,6 +443,30 @@ async function main() {
     }
   });
 
+
+  document.querySelector(".seekbar").addEventListener("click", (e) => {
+    // This console logs the offsetX value, Total width of the seekbar and total duration of the song
+    console.log(
+      e.offsetX,
+      e.target.getBoundingClientRect().width,
+      currentMusic.duration
+    );
+    // The percent variable stores the calculation of e.offsetX divided by the total width seekbar and then *(Multiply) the value with 100, because we want the decimal values
+    let percent = (e.offsetX / e.target.getBoundingClientRect().width) * 100;
+    document.querySelector(".circul").style.left = percent + "%";
+    // To get the currentTime of the song when the seekbar is dragged the currentTime of the song will be updated
+    // To get the currentTime we *(Multiply) the song Duration with percent variable(the percent logic/calculation explained above) then divide with 100 so we get the decimal numbers.
+    currentMusic.currentTime = (currentMusic.duration * percent) / 100;
+
+    // If the click is at the very end of the seekbar, reset position to start and play the next song
+    if (e.offsetX >= e.target.getBoundingClientRect().width - 1) {
+      console.log("Clicked at the end of the seekbar, playing next song...");
+      playSong(searchIndex + 1)
+    }
+  });
+
+
+
   // Event listener for the end of the song to play the next song automatically
   currentSong.addEventListener("ended", () => {
     console.log("Song ended, playing next song...");
@@ -338,6 +474,16 @@ async function main() {
       playMusic(currentIndex + 1);
     } else {
       playMusic(0); // Loop back to the first song
+    }
+  });
+
+   // Event listener for the end of the song to play the next song in search filed automatically
+   currentMusic.addEventListener("ended", () => {
+    console.log("Song ended, playing next song...");
+    if (currentIndex < songs.length - 1) {
+      playSong(searchIndex + 1)
+    } else {
+      playSong(0); // Loop back to the first song
     }
   });
 
@@ -386,61 +532,6 @@ document.querySelector(".beck").addEventListener("click", () => {
   titlebar.style.display = "flex"
   librarycont.style.display = "block";
 });
-
-const results = document.getElementById('results');
-
-  let search = document.getElementById('search-input');
-  search.addEventListener('input', async function() {
-    
-      const query = (this.value || "").toLowerCase();
-      results.innerHTML = "";
-
-      let ss = await  getMusic("music");
-      const filteredSongs = ss.filter(ss => ss.toLowerCase().includes(query));
-
-      if (filteredSongs.length > 0) {
-          filteredSongs.forEach(ss => {
-              results.innerHTML = results.innerHTML + `
-        <div class="music-box">
-        <div class="music-img">
-            <img src="svg/tune.svg" alt="Music" class="invert"  width="50px" height="30px">
-        </div>
-        <div class="music-name">
-            <h5>${ss}</h5>
-        </div>
-        <div class="music-play">
-            <img class="invert searchPlay" src="svg/play.svg" alt="">
-        </div>
-    </div>`;
-          });
-      } else {
-          results.textContent = 'No songs available';
-      }
-      
-      Array.from(document.querySelectorAll(".music-box")).forEach((e, index) => {
-        e.querySelector(".searchPlay").addEventListener("click", (event) => {
-          event.stopPropagation();
-          if (searchIndex === index) {
-            if (currentMusic.paused) {
-              currentMusic.play();
-              updatePlayButton(index, true);
-            } else {
-              currentMusic.pause();
-              updatePlayButton(index, false);
-            }
-          } else {
-            playSong(index);
-          }
-        });
-    
-        e.addEventListener("click", () => {
-          playSong(index);
-        });
-      });
-  });
-
-
-  getMusic();
 
 }
 

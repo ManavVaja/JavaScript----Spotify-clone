@@ -298,7 +298,7 @@ body {
     position: absolute;
     bottom: 8px;
     right: 18px;
-    width: 61vw;
+    width: 62vw;
     border: 1px solid rgb(240, 238, 247);
     height: 3px;
     border-radius: 10px;
@@ -651,4 +651,8 @@ body {
     width: 59vw;
     height: 83vh;
    }
+   .seekbar{
+    width: 83vw;
+    }
+
 }
