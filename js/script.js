@@ -10,6 +10,8 @@ let searchIndex = 0;
 let isSearchPlaying = false; // To track which type of music is playing
 let searchResults = []; // To store the filtered search results
 
+//Get the songs from the folder and store it in the Array
+
 async function getSongs(folder) {
   currentfolder = folder;
   let a = await fetch(`/${folder}/`);
@@ -73,6 +75,7 @@ async function getSongs(folder) {
   return songs;
 }
 
+// Formate the minute which are come from the song Duration and current Time 
 function formatSecondsToMinutes(seconds) {
   if (isNaN(seconds) || seconds < 0) {
     return "00:00";
@@ -94,7 +97,7 @@ function formatSecondsToMinutes(seconds) {
 }
 
 
-// Update the play/pause button for the current song
+// Update the play/pause button for the currentsong / currentMusic (library, serach section's & Play-bar)
 function updatePlayButton(index, isPlaying, context) {
   let playButton;
   if (context === 'search') {
@@ -126,8 +129,6 @@ function updatePlayButton(index, isPlaying, context) {
 }
 
 
-
-
 // We create the function which plays the songs
 // This function accepts the argument as the track of the song and fetches that song from the (folder) /songs/ then append the track of the song to play the current music.
 // For album songs
@@ -150,10 +151,8 @@ const playMusic = (index, paused = false) => {
   document.querySelector(".songTime").innerHTML = "00:00/00:00";
 };
 
-
-
-
-
+// Display the Albums Daynamicly, mens user create the folder uder the song folder, That folder are diplaying like a Album in our spotify app.
+// Album folder must contain the file like, jason file (for song information), songs, imge (which are shown in the album cover photo)
 async function dispalyAlbums() {
   let a = await fetch(`/songs/`);
   let respons = await a.text();
@@ -190,7 +189,7 @@ async function dispalyAlbums() {
 
 }
 
-// new feheras 
+//Search seaction songs Array (search sonsgs are fecth from this Array)
 
 const music = [
   { title: "Abhi na jao chod kar", url: "music/Abhi%20Na%20Jao%20Chhod%20Kar.mp3" },
@@ -209,6 +208,8 @@ const music = [
   // Add more songs here
 ];
 
+// Fuction for playing search seaction music 
+
 const playSearchedSong = (index, paused = false) => {
   if (!paused) {
     currentMusic.pause(); // Stop the currently playing song
@@ -226,7 +227,7 @@ const playSearchedSong = (index, paused = false) => {
   document.querySelector(".songTime").innerHTML = "00:00/00:00";
 };
 
-// Adds the event listener to the search input field
+// Adds the event listener to the search input field to serach the song based on the input
 const search = document.getElementById("search-input");
 search.addEventListener("input", (e) => {
   const value = e.target.value.toLowerCase();
@@ -280,18 +281,6 @@ search.addEventListener("input", (e) => {
 });
 
 
-// For searched songs
-
-
-
-
-
-
-
-// new fechers section end's
-
-
-
 // If we directly call the function then above function returns the promises which are pending
 // To fulfill the promises we define the main function which is also an async function and call the getSongs() function into the main function and await the getSongs() function to wait until the promise is fulfilled.
 
@@ -305,7 +294,6 @@ async function main() {
   let previous = document.getElementById("previous");
   let next = document.getElementById("next");
   let volume = document.getElementById("vol");
-  // let searchplaybtn = document.getElementById('searchPlay');
   let play = document.getElementById("play");
   play.addEventListener("click", () => {
    if (isSearchPlaying) {
@@ -350,6 +338,8 @@ async function main() {
   let value = document.querySelector(".value");
   let volumeIcon = document.querySelector("#volume-icon");
 
+  // event are listion when changing the volume (high - low volume)
+
   volume.addEventListener("change", (e) => {
 
     currentSong.volume = parseInt(e.target.value) / 100;
@@ -363,7 +353,7 @@ async function main() {
       volumeIcon.src = `svg/volume.svg`;
     }
   });
-
+  // Change the volume image "loud" to "Mute" when usear chnage the volume to 0% then image changed to "Mute" 
   document.querySelector(".volume>img").addEventListener("click", (e) => {
     if (e.target.src.includes("svg/volume.svg")) {
       e.target.src = e.target.src.replace("svg/volume.svg", "svg/mute.svg");
@@ -380,7 +370,7 @@ async function main() {
     }
 
   })
-
+  // For library/Album section seek-bar postion change 
 
   // Calculate the currentTime, offsetX (the offsetX will give the horizontal x value when the circle moves)
   currentSong.addEventListener("timeupdate", () => {
@@ -396,6 +386,8 @@ async function main() {
       updatePlayButton(currentIndex, false);
     }
   });
+
+  // when serach section seek-bar postion chnage
 
     // Calculate the currentTime, offsetX (the offsetX will give the horizontal x value when the circle moves)
     currentMusic.addEventListener("timeupdate", () => {
@@ -483,13 +475,14 @@ async function main() {
   let sickbar = document.querySelector(".sickbar");
   let musicinfo = document.querySelector(".music-info");
 
+  // set the css property for the mobile view, the library section in mobile are display when the user click on the hambarger icon
   document.querySelector(".hambaurg").addEventListener("click", () => {
     left.style.left = 0;
     playbar.style.cssText = "width: 62vw; right: 35px;";
     sickbar.style.cssText = "width: 58vw";
     musicinfo.style.width = "60vw";
   });
-
+  // Close the library section and display only the Album section in the mobile 
   document.querySelector(".close").addEventListener("click", () => {
     left.style.left = "-100%";
     playbar.style.cssText = "width: 91vw; right: 25px;";
@@ -497,7 +490,7 @@ async function main() {
     musicinfo.style.width = "88vw";
   });
 
-  // new fectuers under prograss.
+  //Adding the css property for show the search filed section
 
     const searchContainer = document.getElementById('search-container');
     const searchfiled = document.getElementById('search-field');
@@ -517,6 +510,7 @@ async function main() {
     }
 });
 
+// Beck button to return in the library section 
 document.querySelector(".beck").addEventListener("click", () => {
   searchContainer.style.display = 'none';
   searchfiled.style.display = 'none';
